@@ -1,0 +1,136 @@
+---
+###########################
+# Ansible Playbook: DebianGUI Desktop - main.yml
+#   Creates Debian GNome Desktop System by orchestrating diffrent roles and tasks.
+# Source Repository: https://github.com/build-boxes/debian-gnome
+###########################
+- name: Playbook Create Debian GUI Desktop - main.yml
+  hosts: all
+  vars_files:
+    - ./vars/vars.yml
+    - ./vars/secrets.yml
+  #become: true
+
+  # For Playbook - OS Specifc Vars.
+  pre_tasks:
+    - debug: var=ansible_env.LOGNAME
+    - debug: var=ansible_os_family
+    - name: Load OS specific Vars file for playbook, if any.
+      ansible.builtin.include_vars: "{{ item }}"
+      with_first_found:
+        - "./vars/os_specific_{{ ansible_os_family }}.yml"
+        - "./vars/os_specific_default.yml"
+    - name: Load OS specific Secret Vars file for playbook, if any.
+      ansible.builtin.include_vars: "{{ item }}"
+      with_first_found:
+        - "./vars/vsecrets_{{ ansible_os_family }}.yml"
+        - "./vars/vsecrets_default.yml"
+    - name: Ensure Ansible tmp directory exists with correct permissions for "sudo su unprevilged"
+      become: true
+      ansible.builtin.file:
+        path: "/root/.ansible/tmp"
+        state: directory
+        mode: '1777'
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+      when:
+        - ansible_os_family == 'Debian'  
+    - name: Perform a Block of RHEL Family pre-tasks
+      become: true
+      block:
+        - name: Register with activationkey and consume subscriptions matching Red Hat Enterprise Server or Red Hat Virtualization
+          community.general.redhat_subscription:
+            state: present
+            activationkey: "{{ rhel_subscrip_activation_key }}"
+            org_id: "{{ rhel_subscrip_org_id }}"
+            pool_id: "{{ rhel_subscrip_poolid }}"
+          when: rhel_subscription_register and ansible_distribution == 'Red Hat Enterprise Linux'      
+        - name: Update and upgrade yum packages
+          yum:
+            update_cache: yes
+            name: '*'
+            state: latest
+        - name: Perform repo-epel role tasks
+          include_role:
+            name: geerlingguy.repo-epel
+        - name: Perform repo-remi role tasks
+          include_role:
+            name: geerlingguy.repo-remi
+        - name: Update yum/dnf configuration 
+          shell: |
+            dnf config-manager --set-enabled epel
+            dnf config-manager --set-enabled remi
+      when:
+        - ansible_os_family == 'RedHat'  
+  # roles:
+  #   - role: hammadrauf.sudousers
+  #   - role: fauust.mariadb
+  #   - role: hammadrauf.apache2
+  #   - role: geerlingguy.php
+
+    - name: Block to include roles as user root
+      become: true
+      block:
+        - name: Perform Sudouser role tasks
+          include_role:
+            name: hammadrauf.sudousers
+
+        - name: Ensure Ansible tmp directory exists with correct permissions for "sudo su unprevilged"
+          ansible.builtin.file:
+            path: "/home/{{ su_vault_vmuser1 }}/.ansible/tmp"
+            state: directory
+            mode: '1777'
+            owner: "{{ su_vault_vmuser1 }}"
+            group: "{{ su_vault_vmuser1 }}"
+
+        - name: Include Configure-Network Static IP tasks
+          include_tasks: network_config.yml
+
+
+    # - name: Adding groups to su_users list
+    #   become: true
+    #   user: 
+    #     name: "{{ item.username }}"
+    #     groups:
+    #       - "{{ mariadb_user }}"
+    #       - "{{ ap2_vapache_group }}"
+    #     append: yes
+    #   with_items:
+    #     - "{{ su_users }}"    
+
+    - name: Install GUI Desktop on Debian
+      become: true
+      block:
+        - name: Update APT package index
+          apt:
+            update_cache: yes
+
+        - name: Install GNOME desktop
+          apt:
+            name: gnome
+            state: present
+
+        - name: Install additional useful packages
+          apt:
+            name: "{{ item }}"
+            state: present
+          loop:
+            - gdm3
+            - gnome-terminal
+            - network-manager
+            - xorg
+
+        - name: Ensure the GUI starts on boot
+          systemd:
+            name: gdm
+            enabled: yes
+            state: started
+
+        - name: Reboot the system
+          reboot:
+            msg: "Reboot initiated by Ansible after GUI installation."
+            reboot_timeout: 600

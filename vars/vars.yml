@@ -1,0 +1,34 @@
+---
+####
+# Ansible Playbook Variables:
+#     - Can include Role default variables that need to be overridden by this playbook.
+#     - Secret Variables are saved 'secrets.yml' in seperate file and should not be
+#       version controlled. Also they should be encrypted for safety using
+#       ansible-vault.
+#     - See ../docs sub-folder for help on how to use ansible-vault.
+####
+
+# Vars for Role: hammadrauf.sudousers
+su_users:
+  - username: "{{ su_vault_vmuser1 }}"
+    password: "{{ su_vault_vmpwd1 }}"
+    is_super_user: true
+    sudo_rules: []
+  - username: "{{ su_vault_vmuser2 }}"
+    password: "{{ su_vault_vmpwd2 }}"
+    is_super_user: false
+    sudo_rules:
+      - "ALL=(ALL)   NOPASSWD: /usr/bin/su - {{ su_vault_vmuser1 }}"
+      - "ALL=(root)   NOPASSWD: /bin/su - {{ su_vault_vmuser1 }}"
+
+# Network Fixed IP Config
+nw_conn_name: "System eth2"
+nw_ifname: "eth2"
+nw_ip4: "192.168.0.22"
+nw_ip4_cidr: "{{ nw_ip4 }}/24"
+nw_netmask: "255.255.255.0"
+nw_gw4: "192.168.0.1"
+nw_dns4_list:
+  - "192.168.0.1"
+  - "8.8.8.8"
+
