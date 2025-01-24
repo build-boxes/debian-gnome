@@ -2,7 +2,7 @@
 It is a Vagrant and Ansible Playbook that builds a local host Debian System with GNOME desktop. 
 
 ## Disclaimer
-1. There are no Guarantee of anything about this script, please use of your own accord.
+1. There are no Guarantee of anything about this script, please use of your own accord. :man_farmer:
 2. Hosting on Public-Cloud is NOT free. See Linode/Azure/AWS/GCP pricing before usage of this script.
 3. If you are testing this script, then make sure that all resources created on the public cloud are also deleted after the testing is completed. Otherwise you may be surprised by a costly bill from Azure or Linode or other Public Cloud provider.
 
@@ -256,8 +256,11 @@ $6$ieMLxPFShvi6rao9$XEAU9ZDvnPtL.sDuSdRi6M79sgD9254b/0wZvftBNvMOjj3pHJBCIe04x2M.
 ## External Roles Used in this Project
 The following external ansible roles are used in this project to make it modular. Details of Role specific variables can be explored in the respective role documentation.  
 * [hammadrauf.sudousers](https://github.com/hammadrauf/sudousers)
+  
 For upto date list of roles used please check [roles/requirements.yml](https://github.com/build-boxes/webnode/blob/main/roles/requirements.yml) file.  
 
 ## About this Project
-- To do - maybe :) 
+- To do - maybe :slightly_smiling_face:
 
+## Maintained By
+- Hammad Rauf, :canada:, :pakistan:

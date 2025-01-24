@@ -102,12 +102,13 @@
     #   with_items:
     #     - "{{ su_users }}"    
 
+  tasks:
     - name: Install GUI Desktop on Debian
       become: true
       block:
-        - name: Update APT package index
-          apt:
-            update_cache: yes
+        # - name: Update APT package index
+        #   apt:
+        #     update_cache: yes
 
         - name: Install GNOME desktop
           apt:
@@ -119,18 +120,47 @@
             name: "{{ item }}"
             state: present
           loop:
-            - gdm3
+            - sddm
             - gnome-terminal
             - network-manager
             - xorg
 
+        - name: Ensure SDDM is the default display manager
+          shell: |
+            echo "/usr/bin/sddm" > /etc/X11/default-display-manager
+
         - name: Ensure the GUI starts on boot
           systemd:
-            name: gdm
+            name: sddm
             enabled: yes
             state: started
 
-        - name: Reboot the system
-          reboot:
-            msg: "Reboot initiated by Ansible after GUI installation."
-            reboot_timeout: 600
+        - name: Trigger system reboot
+          debug:
+            msg: "System will reboot if changes are detected."
+          notify:
+            - Reboot the system
+
+  handlers:
+    - name: Restart systemd-networkd
+      systemd:
+        name: systemd-networkd
+        state: restarted
+      async: 120
+      poll: 0
+      register: net_restarting
+
+    - name: Check restart systemd-networkd status
+      async_status:
+        jid: "{{ net_restarting.ansible_job_id }}"
+      register: async_poll_results
+      until: async_poll_results.finished
+      retries: 30
+      listen: Restart systemd-networkd
+
+    - name: Reboot the system
+      become: true
+      become_user: "{{ su_vault_vmuser1 }}"
+      reboot:
+        msg: "Reboot initiated by Ansible after GUI installation."
+        reboot_timeout: 600

@@ -149,13 +149,14 @@
     retries: 3
     delay: 5
     when: p.stat.isdir is defined and p.stat.isdir and ansible_os_family == 'Debian'
+    notify: Restart systemd-networkd
 
-  - name: "Restart networking - Debian family"
-    ansible.builtin.service:
-      name: networking
-      state: restarted
-    when: ansible_os_family == 'Debian' and (p.stat.isdir is not defined or not p.stat.isdir)
-
+  # - name: "Restart networking - Debian family"
+  #   ansible.builtin.service:
+  #     name: networking
+  #     state: restarted
+  #   when: ansible_os_family == 'Debian' and (p.stat.isdir is not defined or not p.stat.isdir)
+  
   - name: "Wait for service 'networking' to be running in Debian"
     ansible.builtin.service_facts:
     register: result_sf
