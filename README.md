@@ -257,7 +257,7 @@ $6$ieMLxPFShvi6rao9$XEAU9ZDvnPtL.sDuSdRi6M79sgD9254b/0wZvftBNvMOjj3pHJBCIe04x2M.
 The following external ansible roles are used in this project to make it modular. Details of Role specific variables can be explored in the respective role documentation.  
 * [hammadrauf.sudousers](https://github.com/hammadrauf/sudousers)
   
-For upto date list of roles used please check [roles/requirements.yml](https://github.com/build-boxes/webnode/blob/main/roles/requirements.yml) file.  
+For upto date list of roles used please check [roles/requirements.yml](https://github.com/build-boxes/debian-gnome/blob/main/roles/requirements.yml) file.  
 
 ## About this Project
 - To do - maybe :slightly_smiling_face:
