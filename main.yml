@@ -87,9 +87,10 @@
             owner: "{{ su_vault_vmuser1 }}"
             group: "{{ su_vault_vmuser1 }}"
 
-        - name: Include Configure-Network Static IP tasks
-          include_tasks: network_config.yml
+    - name: Include Configure-Network Static IP tasks
+      include_tasks: network_config.yml
 
+  tasks:
 
     # - name: Adding groups to su_users list
     #   become: true
@@ -102,7 +103,10 @@
     #   with_items:
     #     - "{{ su_users }}"    
 
-  tasks:
+    # - name: Dummy task - pause 4 seconds
+    #   pause:
+    #     seconds: 4
+      
     - name: Install GUI Desktop on Debian
       become: true
       block:
@@ -112,28 +116,35 @@
 
         - name: Install GNOME desktop
           apt:
-            name: gnome
+            name: task-gnome-desktop
             state: present
 
-        - name: Install additional useful packages
-          apt:
-            name: "{{ item }}"
-            state: present
-          loop:
-            - sddm
-            - gnome-terminal
-            - network-manager
-            - xorg
+        # - name: Install additional useful packages
+        #   apt:
+        #     name: "{{ item }}"
+        #     state: present
+        #   loop:
+        #     - sddm
+        #     - gnome-terminal
+        #     - network-manager
+        #     - xorg
 
-        - name: Ensure SDDM is the default display manager
-          shell: |
-            echo "/usr/bin/sddm" > /etc/X11/default-display-manager
+        # - name: Remove existing display-manager symlink
+        #   file:
+        #     path: /etc/systemd/system/display-manager.service
+        #     state: absent
 
-        - name: Ensure the GUI starts on boot
-          systemd:
-            name: sddm
-            enabled: yes
-            state: started
+        # - name: Ensure the GDM3 is disabled
+        #   systemd:
+        #     name: gdm3
+        #     enabled: false
+        #     state: stopped
+
+        # - name: Ensure the GUI starts on boot
+        #   systemd:
+        #     name: sddm
+        #     enabled: yes
+        #     state: started
 
         - name: Trigger system reboot
           debug:
@@ -141,26 +152,26 @@
           notify:
             - Reboot the system
 
-  handlers:
-    - name: Restart systemd-networkd
-      systemd:
-        name: systemd-networkd
-        state: restarted
-      async: 120
-      poll: 0
-      register: net_restarting
+        # - name: Trigger system reboot asynchronously
+        #   become: true
+        #   become_user: "{{ su_vault_vmuser1 }}"
+        #   reboot:
+        #     msg: "Reboot initiated by Ansible to apply static IP configuration."
+        #     reboot_timeout: 300
 
-    - name: Check restart systemd-networkd status
-      async_status:
-        jid: "{{ net_restarting.ansible_job_id }}"
-      register: async_poll_results
-      until: async_poll_results.finished
-      retries: 30
-      listen: Restart systemd-networkd
+        # - name: Pause for system reboot
+        #   pause:
+        #     minutes: 2
+
+        # - name: Wait for system to become reachable again
+        #   wait_for_connection:
+        #     timeout: 300
+
+  handlers:
 
     - name: Reboot the system
       become: true
-      become_user: "{{ su_vault_vmuser1 }}"
+      #become_user: "{{ su_vault_vmuser1 }}"
       reboot:
         msg: "Reboot initiated by Ansible after GUI installation."
-        reboot_timeout: 600
+        reboot_timeout: 300

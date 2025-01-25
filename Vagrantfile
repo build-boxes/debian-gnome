@@ -6,7 +6,19 @@ Vagrant.configure("2") do |config|
   config.vm.define "debian" do |debian|
     debian.vm.box = "generic/debian12"
     debian.vm.network "private_network", ip: "192.168.56.6"
+    debian.vm.network :forwarded_port, guest: 22, host: 2230, host_ip: "0.0.0.0", id: "ssh", auto_correct: true
     debian.vm.network "public_network", bridge: "Realtek Gaming 2.5GbE Family Controller"
+    config.vm.provider "virtualbox" do |vb|
+      #vb.memory = "4096"
+      #vb.cpus = 2
+      vb.customize ["modifyvm", :id, "--usb-ohci", "on"]
+      vb.customize ["modifyvm", :id, "--usb-ehci", "on"]
+      vb.customize ["modifyvm", :id, "--x86-pae", "off"]
+      vb.customize ["modifyvm", :id, "--audio-controller", "ac97"]
+      vb.customize ["modifyvm", :id, "--audio-driver", "default"]
+      vb.customize ["modifyvm", :id, "--mouse", "usb"]
+      vb.customize ["modifyvm", :id, "--keyboard", "usb"]
+    end   
   end
 
   # config.vm.define "rocky" do |rocky|
